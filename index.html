@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>TradeLot Feed</title>
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+    <main class="app-shell">
+        <section class="panel">
+            <p class="eyebrow">ALT:V Marketplace Feed</p>
+            <h1>marketplace.client.trading.addTradeLot</h1>
+            <p class="subline">Последние 10 событий. Новые записи появляются сверху.</p>
+            <div class="feed-meta">
+                <span>Лимит строк: 10</span>
+                <span id="entry-count">0 записей</span>
+            </div>
+
+            <div id="empty-state" class="empty-state">Нет данных</div>
+
+            <div class="table-wrap" id="table-wrap" hidden>
+                <table class="feed-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Account ID</th>
+                            <th>Item ID</th>
+                            <th>Amount</th>
+                            <th>Price</th>
+                            <th>Type</th>
+                        </tr>
+                    </thead>
+                    <tbody id="feed-body"></tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script src="./app.js"></script>
+</body>
+</html>
