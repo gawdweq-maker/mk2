@@ -6,7 +6,6 @@
     --text: #edf5ff;
     --muted: #8aa4c2;
     --accent: #53c7b7;
-    --accent-soft: rgba(83, 199, 183, 0.16);
     --shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
 }
 
@@ -70,40 +69,25 @@ h1 {
     font-size: 14px;
 }
 
-.control-panel {
+.status-grid {
     display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
     margin-bottom: 18px;
 }
 
-.payload-input {
-    width: 100%;
-    min-height: 140px;
-    resize: vertical;
-    padding: 14px;
+.status-card {
+    padding: 14px 16px;
     border: 1px solid var(--line);
     border-radius: 16px;
     background: var(--bg-soft);
-    color: var(--text);
-    font: inherit;
 }
 
-.control-actions {
-    display: flex;
-    gap: 10px;
-}
-
-.control-button {
-    border: 1px solid rgba(83, 199, 183, 0.28);
-    border-radius: 999px;
-    background: rgba(83, 199, 183, 0.18);
-    color: var(--text);
-    padding: 10px 16px;
-    cursor: pointer;
-}
-
-.control-button-secondary {
-    background: rgba(255, 255, 255, 0.08);
+.status-label {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--muted);
+    font-size: 13px;
 }
 
 .empty-state {
@@ -174,10 +158,6 @@ h1 {
     font-size: 12px;
 }
 
-code {
-    color: #c7fff8;
-}
-
 @media (max-width: 720px) {
     .panel {
         padding: 18px;
@@ -185,8 +165,8 @@ code {
     }
 
     .feed-meta,
-    .control-actions {
-        flex-direction: column;
+    .status-grid {
+        grid-template-columns: 1fr;
     }
 
     .feed-table th,

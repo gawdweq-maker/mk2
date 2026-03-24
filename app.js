@@ -1,20 +1,24 @@
 (function () {
     const IMAGE_BASE_URL = "https://cdn-eu.majestic-files.net/public/master/static/img/inventory/items";
+    const SUPABASE_URL = "https://YOUR_PROJECT_REF.supabase.co";
+    const SUPABASE_ANON_KEY = "YOUR_SUPABASE_ANON_KEY";
+    const TABLE_NAME = "marketplace_feed";
+    const FEED_KEY = "marketplace_init_result";
+    const POLL_MS = 3000;
+
     const emptyState = document.getElementById("empty-state");
     const tableWrap = document.getElementById("table-wrap");
     const feedBody = document.getElementById("feed-body");
     const entryCount = document.getElementById("entry-count");
-    const feedSource = document.getElementById("feed-source");
-    const payloadInput = document.getElementById("payload-input");
-    const applyButton = document.getElementById("apply-json");
-    const clearButton = document.getElementById("clear-json");
+    const syncStatus = document.getElementById("sync-status");
+    const lastUpdated = document.getElementById("last-updated");
+
+    function hasSupabaseConfig() {
+        return SUPABASE_URL !== "https://YOUR_PROJECT_REF.supabase.co" && SUPABASE_ANON_KEY !== "YOUR_SUPABASE_ANON_KEY";
+    }
 
     function formatValue(value) {
         return value === undefined || value === null || value === "" ? "-" : String(value);
-    }
-
-    function setSourceLabel(text) {
-        feedSource.textContent = text;
     }
 
     function buildImageUrl(itemId) {
@@ -41,107 +45,54 @@
             emptyState.hidden = false;
             tableWrap.hidden = true;
             entryCount.textContent = "0 записей";
+        } else {
+            emptyState.hidden = true;
+            tableWrap.hidden = false;
+            entryCount.textContent = `${items.length} записей`;
+
+            for (const item of items) {
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>${createImageCell(item)}</td>
+                    <td>${formatValue(item.itemId)}</td>
+                    <td>${formatValue(item.totalQuantity)}</td>
+                    <td>${formatValue(item.startingBet)}</td>
+                `;
+                feedBody.appendChild(row);
+            }
+        }
+
+        lastUpdated.textContent = payload?.updated_at || "-";
+    }
+
+    async function fetchFeed() {
+        if (!hasSupabaseConfig()) {
+            syncStatus.textContent = "Укажи Supabase config";
             return;
         }
 
-        emptyState.hidden = true;
-        tableWrap.hidden = false;
-        entryCount.textContent = `${items.length} записей`;
-
-        for (const item of items) {
-            const row = document.createElement("tr");
-            row.innerHTML = `
-                <td>${createImageCell(item)}</td>
-                <td>${formatValue(item.itemId)}</td>
-                <td>${formatValue(item.totalQuantity)}</td>
-                <td>${formatValue(item.startingBet)}</td>
-            `;
-            feedBody.appendChild(row);
-        }
-    }
-
-    function parseCompactPayload(compactValue, eventName) {
-        const items = [];
-
-        if (!compactValue) {
-            return {
-                eventName: eventName || "marketplace.client.initResult",
-                items
-            };
-        }
-
-        const rows = compactValue.split(";");
-
-        for (const row of rows) {
-            if (!row) {
-                continue;
+        const url = `${SUPABASE_URL}/rest/v1/${TABLE_NAME}?select=feed_key,event_name,items,item_count,updated_at&feed_key=eq.${encodeURIComponent(FEED_KEY)}&limit=1`;
+        const response = await fetch(url, {
+            headers: {
+                apikey: SUPABASE_ANON_KEY,
+                Authorization: `Bearer ${SUPABASE_ANON_KEY}`
             }
+        });
 
-            const parts = row.split(",");
-            if (parts.length < 3) {
-                continue;
-            }
-
-            const itemId = Number(parts[0]);
-            if (!itemId) {
-                continue;
-            }
-
-            items.push({
-                itemId,
-                totalQuantity: parts[1],
-                startingBet: Number(parts[2] ?? 0)
-            });
+        if (!response.ok) {
+            const errorText = await response.text();
+            syncStatus.textContent = `Ошибка загрузки: ${response.status}`;
+            console.error("Supabase fetch failed", errorText);
+            return;
         }
 
-        return {
-            eventName: eventName || "marketplace.client.initResult",
-            items
-        };
-    }
-
-    function parsePayloadFromHash() {
-        const hash = window.location.hash.startsWith("#") ? window.location.hash.slice(1) : window.location.hash;
-        const params = new URLSearchParams(hash);
-        const version = params.get("v");
-        const compactData = params.get("data");
-        const eventName = params.get("event");
-
-        if (version === "2" && compactData) {
-            const decodedCompact = decodeURIComponent(compactData);
-            payloadInput.value = decodedCompact;
-            return parseCompactPayload(decodedCompact, eventName);
-        }
-
-        return null;
-    }
-
-    function applyPayloadFromTextarea() {
-        const compact = (payloadInput.value || "").trim();
-        const payload = parseCompactPayload(compact, "marketplace.client.initResult");
-        const nextHash = `v=2&event=${encodeURIComponent(payload.eventName)}&data=${encodeURIComponent(compact)}`;
-        window.location.hash = nextHash;
-        setSourceLabel("Источник: compact payload");
+        const rows = await response.json();
+        const payload = rows[0] || { items: [], updated_at: null };
         render(payload);
+        syncStatus.textContent = payload.items?.length ? "Данные обновлены" : "Ожидание данных";
     }
 
-    function clearPayload() {
-        payloadInput.value = "";
-        window.location.hash = "";
-        setSourceLabel("Источник: URL hash");
-        render({ items: [] });
-    }
-
-    applyButton.addEventListener("click", applyPayloadFromTextarea);
-    clearButton.addEventListener("click", clearPayload);
-
-    window.addEventListener("hashchange", () => {
-        const payload = parsePayloadFromHash();
-        setSourceLabel(payload ? "Источник: compact payload" : "Источник: URL hash");
-        render(payload || { items: [] });
-    });
-
-    const initialPayload = parsePayloadFromHash();
-    setSourceLabel(initialPayload ? "Источник: compact payload" : "Источник: URL hash");
-    render(initialPayload || { items: [] });
+    render({ items: [], updated_at: null });
+    fetchFeed();
+    setInterval(fetchFeed, POLL_MS);
 })();
