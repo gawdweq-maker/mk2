@@ -9,6 +9,7 @@
     const entryCount = document.getElementById("entry-count");
     const syncStatus = document.getElementById("sync-status");
     const lastUpdated = document.getElementById("last-updated");
+    const feedSource = document.getElementById("feed-source");
 
     function formatValue(value) {
         return value === undefined || value === null || value === "" ? "-" : String(value);
@@ -66,11 +67,15 @@
     };
 
     if (window.alt && typeof window.alt.on === "function") {
+        feedSource.textContent = "Источник: alt WebView bridge";
         window.alt.on(UI_EVENT_NAME, window.tradeLotFeedSync);
 
         if (typeof window.alt.emit === "function") {
             window.alt.emit(UI_READY_EVENT_NAME);
         }
+    } else {
+        feedSource.textContent = "Источник: внешний браузер";
+        syncStatus.textContent = "Вне игры данные не придут";
     }
 
     render({ items: [], updatedAt: null });
