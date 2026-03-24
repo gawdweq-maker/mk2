@@ -1,4 +1,5 @@
 (function () {
+    const IMAGE_BASE_URL = "https://cdn-eu.majestic-files.net/public/master/static/img/inventory/items";
     const emptyState = document.getElementById("empty-state");
     const tableWrap = document.getElementById("table-wrap");
     const feedBody = document.getElementById("feed-body");
@@ -16,15 +17,15 @@
         feedSource.textContent = text;
     }
 
-    function createImageCell(item) {
-        if (!item.imageUrl) {
-            return '<span class="image-fallback">No image</span>';
-        }
+    function buildImageUrl(itemId) {
+        return `${IMAGE_BASE_URL}/${itemId}.webp`;
+    }
 
+    function createImageCell(item) {
         return `
             <img
                 class="item-image"
-                src="${item.imageUrl}"
+                src="${buildImageUrl(item.itemId)}"
                 alt="Item ${formatValue(item.itemId)}"
                 loading="lazy"
                 onerror="this.replaceWith(Object.assign(document.createElement('span'), { className: 'image-fallback', textContent: 'No image' }))"
@@ -59,35 +60,69 @@
         }
     }
 
+    function parseCompactPayload(compactValue, eventName) {
+        const items = [];
+
+        if (!compactValue) {
+            return {
+                eventName: eventName || "marketplace.client.initResult",
+                items
+            };
+        }
+
+        const rows = compactValue.split(";");
+
+        for (const row of rows) {
+            if (!row) {
+                continue;
+            }
+
+            const parts = row.split(",");
+            if (parts.length < 3) {
+                continue;
+            }
+
+            const itemId = Number(parts[0]);
+            if (!itemId) {
+                continue;
+            }
+
+            items.push({
+                itemId,
+                totalQuantity: parts[1],
+                startingBet: Number(parts[2] ?? 0)
+            });
+        }
+
+        return {
+            eventName: eventName || "marketplace.client.initResult",
+            items
+        };
+    }
+
     function parsePayloadFromHash() {
         const hash = window.location.hash.startsWith("#") ? window.location.hash.slice(1) : window.location.hash;
         const params = new URLSearchParams(hash);
-        const rawData = params.get("data");
+        const version = params.get("v");
+        const compactData = params.get("data");
+        const eventName = params.get("event");
 
-        if (!rawData) {
-            return null;
+        if (version === "2" && compactData) {
+            const decodedCompact = decodeURIComponent(compactData);
+            payloadInput.value = decodedCompact;
+            return parseCompactPayload(decodedCompact, eventName);
         }
 
-        try {
-            const payload = JSON.parse(decodeURIComponent(rawData));
-            payloadInput.value = JSON.stringify(payload, null, 2);
-            return payload;
-        } catch (error) {
-            console.error("Failed to parse payload from hash", error);
-            return null;
-        }
+        return null;
     }
 
     function applyPayloadFromTextarea() {
-        try {
-            const payload = JSON.parse(payloadInput.value || "{}");
-            const nextHash = `data=${encodeURIComponent(JSON.stringify(payload))}`;
-            window.location.hash = nextHash;
-            setSourceLabel("Источник: ручной JSON");
-            render(payload);
-        } catch (error) {
-            alert("JSON payload содержит ошибку");
-        }
+        const compact = (payloadInput.value || "").trim();
+        const payload = parseCompactPayload(compact, "marketplace.client.initResult");
+        const nextHash = `v=2&event=${encodeURIComponent(payload.eventName)}&data=${encodeURIComponent(compact)}`;
+        window.location.hash = nextHash;
+        setSourceLabel("Источник: compact payload");
+        render(payload);
     }
 
     function clearPayload() {
@@ -102,10 +137,11 @@
 
     window.addEventListener("hashchange", () => {
         const payload = parsePayloadFromHash();
-        setSourceLabel(payload ? "Источник: URL hash" : "Источник: URL hash");
+        setSourceLabel(payload ? "Источник: compact payload" : "Источник: URL hash");
         render(payload || { items: [] });
     });
 
     const initialPayload = parsePayloadFromHash();
+    setSourceLabel(initialPayload ? "Источник: compact payload" : "Источник: URL hash");
     render(initialPayload || { items: [] });
 })();
