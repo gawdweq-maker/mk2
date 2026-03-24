@@ -1,5 +1,4 @@
 (function () {
-    const MAX_ITEMS = 10;
     const emptyState = document.getElementById("empty-state");
     const tableWrap = document.getElementById("table-wrap");
     const feedBody = document.getElementById("feed-body");
@@ -9,8 +8,24 @@
         return value === undefined || value === null || value === "" ? "-" : String(value);
     }
 
+    function createImageCell(item) {
+        if (!item.imageUrl) {
+            return '<span class="image-fallback">No image</span>';
+        }
+
+        return `
+            <img
+                class="item-image"
+                src="${item.imageUrl}"
+                alt="Item ${formatValue(item.itemId)}"
+                loading="lazy"
+                onerror="this.replaceWith(Object.assign(document.createElement('span'), { className: 'image-fallback', textContent: 'No image' }))"
+            >
+        `;
+    }
+
     function render(payload) {
-        const items = Array.isArray(payload?.items) ? payload.items.slice(0, MAX_ITEMS) : [];
+        const items = Array.isArray(payload?.items) ? payload.items : [];
         feedBody.innerHTML = "";
 
         if (items.length === 0) {
@@ -27,12 +42,10 @@
         for (const item of items) {
             const row = document.createElement("tr");
             row.innerHTML = `
-                <td>${formatValue(item.id)}</td>
-                <td>${formatValue(item.accountId)}</td>
+                <td>${createImageCell(item)}</td>
                 <td>${formatValue(item.itemId)}</td>
-                <td>${formatValue(item.amount)}</td>
-                <td>${formatValue(item.price)}</td>
-                <td><span class="type-badge">${formatValue(item.type)}</span></td>
+                <td>${formatValue(item.totalQuantity)}</td>
+                <td>${formatValue(item.startingBet)}</td>
             `;
             feedBody.appendChild(row);
         }
@@ -42,10 +55,5 @@
         render(payload);
     };
 
-    if ("alt" in window) {
-        window.alt.on("tradeLotFeed:update", window.tradeLotFeedSync);
-        window.alt.emit("tradeLotFeed:ready");
-    }
-
-    render({ items: [] });
+    render(window.tradeLotFeedState || { items: [] });
 })();

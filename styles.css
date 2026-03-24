@@ -133,6 +133,21 @@ h1 {
     color: #baf8ef;
 }
 
+.item-image {
+    width: 56px;
+    height: 56px;
+    object-fit: contain;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--line);
+    padding: 6px;
+}
+
+.image-fallback {
+    color: var(--muted);
+    font-size: 12px;
+}
+
 @media (max-width: 720px) {
     .panel {
         padding: 18px;
