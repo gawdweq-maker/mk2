@@ -11,10 +11,19 @@
         <section class="panel">
             <p class="eyebrow">ALT:V Marketplace Feed</p>
             <h1>marketplace.client.initResult</h1>
-            <p class="subline">Список предметов из клиентского события. Для каждого предмета отображается изображение, itemId, totalQuantity и startingBet.</p>
+            <p class="subline">Страница получает данные из URL hash в формате <code>#data=...</code>. Executor формирует готовую ссылку для открытия в браузере.</p>
+
             <div class="feed-meta">
-                <span>Источник: executor state</span>
+                <span id="feed-source">Источник: URL hash</span>
                 <span id="entry-count">0 записей</span>
+            </div>
+
+            <div class="control-panel">
+                <textarea id="payload-input" class="payload-input" spellcheck="false" placeholder="Вставь сюда JSON payload, если хочешь проверить отображение вручную."></textarea>
+                <div class="control-actions">
+                    <button id="apply-json" class="control-button" type="button">Применить JSON</button>
+                    <button id="clear-json" class="control-button control-button-secondary" type="button">Очистить</button>
+                </div>
             </div>
 
             <div id="empty-state" class="empty-state">Нет данных</div>

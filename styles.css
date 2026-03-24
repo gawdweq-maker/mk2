@@ -33,7 +33,7 @@ body {
 }
 
 .panel {
-    width: min(1180px, 100%);
+    width: min(1240px, 100%);
     padding: 28px;
     border: 1px solid var(--line);
     border-radius: 24px;
@@ -68,6 +68,42 @@ h1 {
     margin-bottom: 18px;
     color: var(--muted);
     font-size: 14px;
+}
+
+.control-panel {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.payload-input {
+    width: 100%;
+    min-height: 140px;
+    resize: vertical;
+    padding: 14px;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--bg-soft);
+    color: var(--text);
+    font: inherit;
+}
+
+.control-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.control-button {
+    border: 1px solid rgba(83, 199, 183, 0.28);
+    border-radius: 999px;
+    background: rgba(83, 199, 183, 0.18);
+    color: var(--text);
+    padding: 10px 16px;
+    cursor: pointer;
+}
+
+.control-button-secondary {
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .empty-state {
@@ -123,16 +159,6 @@ h1 {
     border-bottom: none;
 }
 
-.type-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 6px 10px;
-    border: 1px solid rgba(83, 199, 183, 0.24);
-    border-radius: 999px;
-    background: var(--accent-soft);
-    color: #baf8ef;
-}
-
 .item-image {
     width: 56px;
     height: 56px;
@@ -148,13 +174,18 @@ h1 {
     font-size: 12px;
 }
 
+code {
+    color: #c7fff8;
+}
+
 @media (max-width: 720px) {
     .panel {
         padding: 18px;
         border-radius: 18px;
     }
 
-    .feed-meta {
+    .feed-meta,
+    .control-actions {
         flex-direction: column;
     }
 
